@@ -1,0 +1,150 @@
+import pyaudio
+from deepspeech import Model
+import scipy.io.wavfile as wav
+import wave
+import pyttsx3
+import pywhatkit
+import datetime
+import wikipedia
+import pyjokes
+MODEL_PATH = ''
+
+global text1
+
+# Importing the necessary Libraries
+from flask_cors import cross_origin
+from flask import Flask, render_template, request, redirect
+
+
+app = Flask(__name__)
+
+
+
+MODEL_PATH = 'deepspeech-0.8.2-models.pbmm'
+SCORER_PATH = 'deepspeech-0.8.2-models.scorer'
+LM_ALPHA = 0.75
+LM_BETA = 1.78
+BEAM_WIDTH = 500
+
+@app.route('/record_voice_stream')
+def record_voice_stream(stream_file_name):
+    global text1
+    stream_format = pyaudio.paInt16  # Sampling size and format
+    no_of_channels = 1  # Number of audio channels
+    sampling_rate = 16000  # Sampling rate in Hertz
+    frames_count = 1024  # Number of frames per buffer
+    record_seconds = 5
+    stream = pyaudio.PyAudio()
+    stream_data = stream.open(format=stream_format,
+                         channels=no_of_channels,
+                         rate=sampling_rate,
+                         input=True,
+                         frames_per_buffer=frames_count)
+    print("Please speak to record your voice")
+    frames = [stream_data.read(frames_count) for i in range(0, int(sampling_rate / frames_count * record_seconds))]
+    stream_data.stop_stream()
+    stream_data.close()
+    stream.terminate()
+    wave_file = wave.open(stream_file_name, 'wb')
+    wave_file.setnchannels(no_of_channels)
+    wave_file.setsampwidth(stream.get_sample_size(stream_format))
+    wave_file.setframerate(sampling_rate)
+    wave_file.writeframes(b''.join(frames))
+    wave_file.close()
+    print(f'Voice stream file {stream_file_name} is created')
+    speech_model = Model(MODEL_PATH)
+   # Enable language scorer to improve the accuracy
+    speech_model.enableExternalScorer(SCORER_PATH)
+    speech_model.setBeamWidth(BEAM_WIDTH)
+    speech_model.setScorerAlphaBeta(LM_ALPHA, LM_BETA)
+    #speech_model.setBeamWidth(BEAM_WIDTH)
+    _, audio = wav.read(stream_file_name)
+    
+    text1 = str(speech_model.stt(audio))
+             
+    return text1
+
+
+def change_voice(engine, language, gender='VoiceGenderFemale'):
+    for voice in engine.getProperty('voices'):
+        if language in voice.languages and gender ==voice.gender:
+            engine.setProperty('voice', voice.id)
+            return True
+#    raise RuntimeError("Language '{}' for gender '{}' not found".format(language,gender))
+
+#listener = sr.Recognizer()
+engine = pyttsx3.init()
+change_voice(engine, "en_US", "VoiceGenderFemale")
+
+def talk(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def take_command():
+
+    print('listening..')
+    command =  text1
+    print(command)
+    command = command.lower()
+    if 'alexa' in command:
+        command = command.replace('alexa', '')
+        print(command)
+    return command
+
+def run_alexa():
+    command = take_command()
+#    command = 'play'
+    print(command)
+    if 'play' in command:
+        song = command.replace('play', '')
+        talk('playing' + song)
+        pywhatkit.playonyt(song)
+        exit(0)
+    elif 'time' in command:
+        time = datetime.datetime.now().strftime('%I:%M %p')
+        talk('Current time is ' + time)
+        exit(0)
+    elif 'who is' in command:
+        person = command.replace('who is', '')
+        info = wikipedia.summary(person, 1)
+        print(info)
+        talk(info)
+        exit(0)
+    elif 'joke' in command:
+        talk(pyjokes.get_joke())
+        exit(0)
+    elif 'search' in command:
+        search = command.replace('search', '')
+        talk('searching Google for ' + search)
+        pywhatkit.search(search)
+        exit(0)
+    elif 'Tell me about' in command:
+        tell = command.replace('Tell me about', '')
+        info=pywhatkit.info("Google", lines=4)
+        talk('This is the information i got about'+tell)
+        talk(info)
+        exit(0)
+    else:
+        
+        talk('Please say the command again.')
+        exit(0)
+
+
+
+@app.route('/', methods=['POST', 'GET'])
+@cross_origin()
+def index():
+    if request.method == 'POST':
+       text = request.form['speech']
+       record_voice_stream(text)
+       run_alexa()
+        
+       return render_template('index.html')
+    else:
+       return render_template('index.html')
+
+if __name__ == "__main__":
+    app.run(port=8000, debug=True)
+
+#while True:
+#    run_alexa() 
