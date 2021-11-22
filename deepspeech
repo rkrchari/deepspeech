@@ -8,6 +8,7 @@ import datetime
 import wikipedia
 import pyjokes
 MODEL_PATH = ''
+import webbrowser as wb
 
 global text1
 
@@ -26,8 +27,9 @@ LM_ALPHA = 0.75
 LM_BETA = 1.78
 BEAM_WIDTH = 500
 
-@app.route('/record_voice_stream')
+
 def record_voice_stream(stream_file_name):
+#def audio(stream_file_name):
     global text1
     stream_format = pyaudio.paInt16  # Sampling size and format
     no_of_channels = 1  # Number of audio channels
@@ -91,6 +93,8 @@ def take_command():
         print(command)
     return command
 
+
+@app.route('/run_alexa')
 def run_alexa():
     command = take_command()
 #    command = 'play'
@@ -98,6 +102,7 @@ def run_alexa():
     if 'play' in command:
         song = command.replace('play', '')
         talk('playing' + song)
+        #pywhatkit.playonyt(run_alexa, song,use_api=True );
         pywhatkit.playonyt(song)
         exit(0)
     elif 'time' in command:
@@ -128,23 +133,29 @@ def run_alexa():
         
         talk('Please say the command again.')
         exit(0)
+output_stream_file = 'speech_stream.wav'
 
+@app.route('/audio')
+def audio():
+    output_stream_file = 'speech_stream.wav'
+    record_voice_stream(output_stream_file)
 
+    while True:
+          run_alexa() 
+    
 
-@app.route('/', methods=['POST', 'GET'])
-@cross_origin()
-def index():
-    if request.method == 'POST':
-       text = request.form['speech']
-       record_voice_stream(text)
-       run_alexa()
+ 
         
-       return render_template('index.html')
-    else:
-       return render_template('index.html')
 
+@app.route('/')
+def index():
+    """Video streaming home page."""
+    return render_template('index.html')
+    
 if __name__ == "__main__":
-    app.run(port=8000, debug=True)
+    app.run(host='0.0.0.0', debug=True, threaded=True,port=5000)
 
-#while True:
-#    run_alexa() 
+
+    
+
+ 
