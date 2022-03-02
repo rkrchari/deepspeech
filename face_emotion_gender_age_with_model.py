@@ -12,7 +12,7 @@ from tensorflow.keras.models import load_model
 global cap
 model1 = load_model('CNNVer1.53.hdf5')
 agemodel = load_model('age_model.34.hdf5')
-gendermodel = load_model('gender_model.18.hdf5')
+gendermodel = load_model('gender_model.32.hdf5')
 EMOTIONS = ['Angry', 'Disgusted', 'Fearful', 'Happy', 'Sad', 'Surprised', 'Neutral']
 import os, random
 
