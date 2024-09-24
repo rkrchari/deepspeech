@@ -1,4 +1,4 @@
-import os
+import os 
 import asyncio
 import faiss  # Ensure you have faiss installed
 from flask import Flask, render_template, request, redirect
@@ -50,7 +50,8 @@ def get_text_chunks(text):
 
 def get_vectorstore(text_chunks):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    return vectorstore
 
 def save_vectorstore(vectorstore):
     faiss.write_index(vectorstore.index, FAISS_INDEX_PATH)
@@ -58,7 +59,8 @@ def save_vectorstore(vectorstore):
 def load_vectorstore():
     if os.path.exists(FAISS_INDEX_PATH):
         index = faiss.read_index(FAISS_INDEX_PATH)
-        return FAISS(index=index)
+        # Assuming you have a way to re-initialize the necessary components
+        return FAISS(index=index, embedding_function=None, docstore=None, index_to_docstore_id=None)  # Provide None or appropriate values for these
     return None
 
 def get_conversation_chain(vectorstore):
