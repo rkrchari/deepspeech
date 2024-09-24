@@ -1,5 +1,6 @@
 import os
 import asyncio
+import faiss  # Ensure you have faiss installed
 from flask import Flask, render_template, request, redirect
 from langchain_community.vectorstores import FAISS
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
@@ -28,6 +29,8 @@ vectorstore = None
 conversation_chain = None
 chat_history = []
 
+FAISS_INDEX_PATH = 'faiss_index.index'  # Path to save the FAISS index
+
 def get_pdf_text(pdf_docs):
     text = ""
     for pdf in pdf_docs:
@@ -49,6 +52,15 @@ def get_vectorstore(text_chunks):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
+def save_vectorstore(vectorstore):
+    faiss.write_index(vectorstore.index, FAISS_INDEX_PATH)
+
+def load_vectorstore():
+    if os.path.exists(FAISS_INDEX_PATH):
+        index = faiss.read_index(FAISS_INDEX_PATH)
+        return FAISS(index=index)
+    return None
+
 def get_conversation_chain(vectorstore):
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.1)
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
@@ -63,6 +75,7 @@ async def process_documents_async(pdf_docs):
     raw_text = get_pdf_text(pdf_docs)
     text_chunks = get_text_chunks(raw_text)
     vectorstore = get_vectorstore(text_chunks)
+    save_vectorstore(vectorstore)  # Save the vectorstore after creation
     conversation_chain = get_conversation_chain(vectorstore)
 
 @app.route('/process', methods=['POST'])
@@ -87,14 +100,15 @@ def chat():
         print("Response from conversation chain:", response)
 
         # Update this part based on the actual structure of the response
-        # Attempt to access the correct key
         bot_response = response.get('response') or response.get('answer') or 'No response found'
-
         chat_history.append({'user': user_question, 'bot': bot_response})
 
     return render_template('chat.html', chat_history=chat_history)
 
-
+# Load the vectorstore when the app starts
+vectorstore = load_vectorstore()
+if vectorstore is not None:
+    conversation_chain = get_conversation_chain(vectorstore)
 
 if __name__ == '__main__':
     app.run(debug=True)
