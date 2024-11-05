@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Chat Interface</title>
 </head>
-
 <body>
     <section>
         <div>
             <div class="flex flex-col justify-center items-center">
                 <h1 class="text-5xl py-2 font-bold text-transparent bg-clip-text bg-gradient-to-tr from-blue-700 via-blue-800 to-gray-900 drop-shadow-2xl underline decoration-double">Chat Interface</h1>
-                <div class="w-screen flex flex-col justify-evenly items-center py-8 px-4">
 
+                <!-- Back to Menu Button -->
+                <form action="/" method="get">
+                    <button type="submit" class="bg-gradient-to-bl from-green-300 via-blue-500 to-purple-600 px-8 rounded-2xl py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500/90">Back to Menu</button>
+                </form>
+
+                <div class="w-screen flex flex-col justify-evenly items-center py-8 px-4">
                     <div class="pb-2 w-full sm:w-[50rem] border border-blue-500 mx-5">
                         <h1 class="w-full py-2 px-3 bg-gradient-to-bl from-green-300 via-blue-500 to-purple-600 font-bold text-white">Ask a question</h1>
                         {% if chat_history %}
@@ -43,5 +46,4 @@
         </div>
     </section>
 </body>
-
 </html>

@@ -28,14 +28,12 @@
                 <p class="mt-6 text-lg leading-8 text-gray-600">Break free from writer's block and explore endless language possibilities.</p>
                 <form action="/process" method="post" enctype="multipart/form-data">
                     <div class="mt-10 flex flex-col sm:flex-row sm:items-center gap-x-6">
-                        <!-- Format Selection Dropdown -->
                         <select name="format_key" id="format_key" required class="border border-gray-300 rounded-2xl py-2 px-4 mb-4 sm:mb-0">
                             <option value="" disabled selected>Select PDF Format</option>
                             <option value="format_a">Format A</option>
                             <option value="format_b">Format B</option>
                         </select>
                         
-                        <!-- File Input for PDFs -->
                         <input type="file" name="pdf_docs" id="pdf_docs" accept=".pdf" multiple required
                             class="text-sm font-semibold leading-6 text-gray-900 border py-2 px-4 rounded-2xl block w-full text-sm text-slate-500 border-l-green-300 border-t-blue-500/30 border-r-purple-600/40 border-b-purple-500/30
                             file:mr-4 file:py-2 file:px-4
@@ -44,19 +42,9 @@
                             file:bg-blue-50 file:text-blue-400
                             hover:file:bg-blue-100">
                         
-                        <!-- Submit Button -->
-                        <button type="submit" class="my-2 bg-gradient-to-bl from-green-300 via-blue-500 to-purple-600 px-8 rounded-2xl py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                            Process
-                        </button>
+                        <button type="submit" class="my-2 bg-gradient-to-bl from-green-300 via-blue-500 to-purple-600 px-8 rounded-2xl py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500/90">Process</button>
                     </div>
                 </form>
-            </div>
-            <div class="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mr-0 lg:mt-0 lg:max-w-none lg:flex-none xl:ml-32">
-                <div class="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
-                    <div class="lg:-m-4 lg:rounded-2xl lg:p-4">
-                        <img src="https://res.cloudinary.com/dtsuvx8dz/image/upload/v1709048322/o3ad4w8hedswhwymbhr9.png" alt="App screenshot" class="sm:w-[23rem] w-2/3 sm:h-[28rem] sm:pl-0 pl-12 rounded-md drop-shadow-2xl">
-                    </div>
-                </div>
             </div>
         </div>
     </div>
