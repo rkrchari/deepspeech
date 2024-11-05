@@ -1,7 +1,7 @@
-import os  
+import os
 import asyncio
-import faiss  # Ensure you have faiss installed
-from flask import Flask, render_template, request, redirect
+import faiss
+from flask import Flask, render_template, request, redirect, session
 from langchain_community.vectorstores import FAISS
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from PyPDF2 import PdfReader
@@ -10,7 +10,6 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.memory import ConversationBufferMemory
 from dotenv import load_dotenv
-from concurrent.futures import ThreadPoolExecutor
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +19,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Initialize Flask app
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # Secure session
 
 # Set up the upload folder and allowed file types
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -33,7 +33,6 @@ VECTORSTORE_PATHS = {
 
 vectorstore = None
 conversation_chain = None
-chat_history = []
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -75,6 +74,8 @@ def get_conversation_chain(vectorstore):
 
 @app.route('/')
 def index():
+    # Clear chat history when returning to the menu
+    session.pop('chat_history', None)  # Clear chat history stored in session
     return render_template('index.html')
 
 async def process_documents_async(pdf_docs, format_key):
@@ -87,14 +88,16 @@ async def process_documents_async(pdf_docs, format_key):
 @app.route('/process', methods=['POST'])
 def process_documents():
     pdf_docs = request.files.getlist('pdf_docs')
-    # Get format key from the form (selected by the user)
     format_key = request.form['format_key']
     asyncio.run(process_documents_async(pdf_docs, format_key))
     return redirect('/chat')
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
-    global vectorstore, conversation_chain, chat_history
+    global vectorstore, conversation_chain
+
+    # Retrieve chat history from session
+    chat_history = session.get('chat_history', [])
 
     if request.method == 'POST':
         if conversation_chain is None:
@@ -109,9 +112,20 @@ def chat():
 
         # Update this part based on the actual structure of the response
         bot_response = response.get('response') or response.get('answer') or 'No response found'
+        
+        # Add to chat history
         chat_history.append({'user': user_question, 'bot': bot_response})
+        
+        # Save the chat history in the session
+        session['chat_history'] = chat_history
 
     return render_template('chat.html', chat_history=chat_history)
+
+@app.route('/clear_chat_history', methods=['POST'])
+def clear_chat_history():
+    # Clear the chat history stored in the session
+    session['chat_history'] = []
+    return redirect('/chat')
 
 # Load the vectorstore when the app starts (for a default format)
 vectorstore = load_vectorstore('format_a')
