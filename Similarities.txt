@@ -1,0 +1,64 @@
+import spacy
+import json
+
+# Load the spaCy model (you can use "en_core_web_md" or "en_core_web_lg" for better accuracy)
+nlp = spacy.load("en_core_web_md")
+
+# Function to calculate similarity between user question and document keys
+def calculate_similarity(user_question, top_docs):
+    # Process the user question using spaCy
+    user_question_doc = nlp(user_question)
+    
+    similarities = []
+    
+    # Iterate over the nested dictionary (top_docs) and compare the question with keys at all levels
+    def traverse_json(data, parent_keys=""):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                current_key = f"{parent_keys}.{key}" if parent_keys else key
+                # Process the key with spaCy and calculate similarity to the user question
+                key_doc = nlp(current_key)
+                similarity = user_question_doc.similarity(key_doc)
+                similarities.append((current_key, similarity))
+                # Recursively process if the value is a nested dictionary
+                traverse_json(value, current_key)
+        elif isinstance(data, list):
+            for idx, item in enumerate(data):
+                traverse_json(item, f"{parent_keys}[{idx}]")
+    
+    # Start traversing the top_docs to calculate similarities
+    traverse_json(top_docs)
+    
+    # Sort similarities in descending order and get the top 7
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    
+    return similarities[:7]
+
+# Example usage
+# Sample JSON document (top_docs)
+top_docs = {
+    "name": "Product A",
+    "category": "Electronics",
+    "features": {
+        "color": "red",
+        "weight": "1.2kg",
+        "dimensions": {
+            "height": "15cm",
+            "width": "10cm",
+            "depth": "5cm"
+        },
+        "battery": "3000mAh"
+    },
+    "price": "$199.99",
+    "availability": "In stock"
+}
+
+# User question
+user_question = "Tell me about the size and color of the product"
+
+# Get the best attributes
+best_attributes = calculate_similarity(user_question, top_docs)
+
+# Output the best attributes based on similarity
+for attr, score in best_attributes:
+    print(f"Attribute: {attr}, Similarity Score: {score}")
