@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Test Cases</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            margin: 50px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 1200px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .html-content {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .download-btn {
+            display: block;
+            margin: 20px auto;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .download-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Generated Test Cases</h1>
+
+        <!-- Display the HTML content here -->
+        <div class="html-content">
+            {{ html_content|safe }}
+        </div>
+
+        <!-- Download button -->
+        <a href="{{ url_for('download_html', filename=html_file_path) }}" class="download-btn" download>Download HTML</a>
+    </div>
+
+</body>
+</html>
