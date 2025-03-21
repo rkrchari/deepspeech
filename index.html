@@ -3,112 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Case Generation</title>
+    <title>Test Case Generation from Business Requirement</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            display: flex;
-            height: 100vh;
-        }
-
-        /* Sidebar with file upload form */
-        .sidebar {
-            background-color: #fff;
-            width: 300px;
-            padding: 20px;
-            box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.1);
-            height: 100%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .sidebar h1 {
-            text-align: center;
-        }
-
-        .sidebar input[type="file"] {
-            font-size: 16px;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-
-        .sidebar button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
-        }
-
-        .sidebar button:hover {
-            background-color: #45a049;
-        }
-
-        /* Main content area */
-        .main-content {
-            margin-left: 320px;  /* Space for sidebar */
-            width: calc(100% - 320px);
-            padding: 20px;
-            background-color: #fff;
-            overflow-y: auto;
-        }
-
-        .main-content h1 {
-            text-align: center;
-            color: #333;
-        }
-
-        /* Panel for displaying HTML output */
-        .output-panel {
-            max-height: 500px;
-            overflow-y: auto;
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background-color: #f9f9f9;
-        }
-
-        /* Download button */
-        .download-btn {
-            display: block;
-            margin: 20px auto;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-
-        .download-btn:hover {
-            background-color: #45a049;
-        }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; display: flex; height: 100vh; }
+        .sidebar { background-color: #ffffff; width: 300px; padding: 20px; box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.1); height: 100%; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; justify-content: flex-start; }
+        .sidebar h1 { text-align: center; font-size: 26px; color: #007bff; margin-bottom: 20px; }
+        .sidebar label { font-size: 16px; color: #333; margin-bottom: 5px; }
+        .sidebar input[type="file"], .sidebar select { font-size: 16px; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .sidebar button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; font-size: 16px; border-radius: 5px; }
+        .sidebar button:hover { background-color: #45a049; }
+        .main-content { margin-left: 320px; width: calc(100% - 320px); padding: 20px; background-color: #fff; overflow-y: auto; position: relative; }
+        .main-content h1 { text-align: center; font-size: 36px; font-family: 'Arial', sans-serif; font-weight: bold; color: #FF6347; margin-top: 40px; margin-bottom: 20px; }
+        .self-assist, .tech-hub { position: absolute; top: 20px; font-size: 36px; font-weight: bold; color: #32CD32; display: flex; align-items: center; }
+        .self-assist { left: 20px; }
+        .tech-hub { right: 20px; }
+        .output-panel { max-height: 500px; overflow-y: auto; margin-top: 20px; border: 1px solid #ddd; padding: 10px; background-color: #f9f9f9; }
+        .download-btn { display: block; margin: 20px auto; background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; border-radius: 5px; text-decoration: none; }
+        .download-btn:hover { background-color: #45a049; }
+        .file-name { font-size: 14px; color: #333; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <!-- Sidebar with file upload form -->
     <div class="sidebar">
-        <h1>Test Case Generation</h1>
+        <h1>Business Requirement/User Stories</h1>
         <form action="/upload" method="POST" enctype="multipart/form-data">
+            
+            <!-- Dropdown for selecting type -->
+            <label for="requirement_type">Select Requirement Type:</label>
+            <select name="requirement_type" id="requirement_type" required>
+                <option value="Business Requirement" {% if requirement_type == 'Business Requirement' %}selected{% endif %}>Business Requirement</option>
+                <option value="User Requirement" {% if requirement_type == 'User Requirement' %}selected{% endif %}>User Requirement</option>
+            </select>
+
             <label for="business_req_doc">Choose PDF:</label>
-            <input type="file" name="business_req_doc" id="business_req_doc" required>
+            <input type="file" name="business_req_doc" id="business_req_doc" required onchange="updateFileName()">
+
+            <p id="file-name" class="file-name"></p>
+
             <button type="submit">Upload</button>
         </form>
     </div>
 
     <!-- Main content area for displaying test case results -->
     <div class="main-content">
-        <h1>Generated Test Cases</h1>
+        <!-- Dynamic header for Test Case results -->
+        <h1 id="dynamic-header">Test Case for {{ requirement_type if requirement_type else "Business Requirement" }}</h1>
+
+        <!-- Self Assist Section -->
+        <div class="self-assist">
+            <i class="fas fa-cogs"></i> 
+            <span>Self Assist</span>
+        </div>
 
         <!-- Display the HTML content here -->
         <div class="output-panel">
@@ -117,7 +65,46 @@
 
         <!-- Download button -->
         <a href="{{ url_for('download_html', filename=html_file_path) }}" class="download-btn" download>Download HTML</a>
+
+        <!-- Tech Hub Branding -->
+        <div class="tech-hub">
+            <i class="fas fa-laptop"></i>
+            <span>Tech Hub</span>
+        </div>
     </div>
+
+    <script>
+        // Function to display the selected file name
+        function updateFileName() {
+            var fileInput = document.getElementById("business_req_doc");
+            var fileName = fileInput.files[0] ? fileInput.files[0].name : "No file selected";
+            document.getElementById("file-name").textContent = "Selected file: " + fileName;
+        }
+
+        // Function to update the header based on the requirement type selection
+        function updateHeader() {
+            var selectedType = document.getElementById("requirement_type").value;
+            var dynamicHeader = document.getElementById("dynamic-header");
+            dynamicHeader.textContent = "Test Case for " + selectedType;
+        }
+
+        // Update header when the requirement type dropdown changes
+        document.getElementById("requirement_type").addEventListener("change", updateHeader);
+
+        // Initialize the dynamic header to reflect the selected option when the page loads
+        window.onload = function() {
+            // Ensure header is correct on page load
+            updateHeader();
+
+            // Retain the selected option after page reload
+            var requirementType = document.getElementById("requirement_type");
+            var selectedOption = requirementType.value;
+            requirementType.querySelector(`option[value="${selectedOption}"]`).selected = true;
+        }
+    </script>
 
 </body>
 </html>
+
+
+
