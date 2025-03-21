@@ -69,16 +69,45 @@ def load_vectorstore():
 import json
 from jinja2 import Template
 
-def generate_test_cases_with_llm(requirements_text):
+def generate_test_cases_with_llm(requirements_text, requirement_type): 
     """
-    Use a large language model to generate test cases from the business requirement text.
+    Generate test cases using a language model based on the requirement type.
     """
     example_prompts = """
     Example 1: User Authentication System
     Test Case ID: TC_001
     Test Case Title: User Registration with Valid Email and Password
+    Pre-Conditions: The user is on the registration page and has valid email and password credentials.
+    Test Steps: 
+        1. Enter a valid email address.
+        2. Enter a valid password.
+        3. Click on the "Register" button.
     Description: Ensure that users can successfully register with a valid email address and password.
-    Expected Output: User should be registered and redirected to the login page.
+    Expected Outcome: User should be registered and redirected to the login page.
+    Pass/Fail Criteria: Pass if the user is registered and redirected; Fail if there is any error in the registration process.
+    
+    Example 2: Shopping Cart System
+    Test Case ID: TC_002
+    Test Case Title: Add Product to Cart
+    Pre-Conditions: The user is logged in and browsing products.
+    Test Steps:
+        1. Navigate to the product details page.
+        2. Click on the "Add to Cart" button.
+        3. View the shopping cart.
+    Description: Ensure that a product is successfully added to the user's shopping cart.
+    Expected Outcome: The selected product should appear in the cart with the correct price and quantity.
+    Pass/Fail Criteria: Pass if the product appears in the cart with correct details; Fail if the product is not added correctly.
+    
+    Example 3: Payment Gateway Integration
+    Test Case ID: TC_003
+    Test Case Title: Successful Payment Transaction
+    Pre-Conditions: The user has items in their shopping cart and is on the checkout page.
+    Test Steps:
+        1. Enter valid credit card information.
+        2. Click on the "Pay Now" button.
+    Description: Ensure that the payment gateway processes the payment successfully.
+    Expected Outcome: The payment should be processed, and the user should receive a confirmation message.
+    Pass/Fail Criteria: Pass if the payment is processed successfully; Fail if any error occurs during the payment.
     """
 
     try:
@@ -88,86 +117,111 @@ def generate_test_cases_with_llm(requirements_text):
         
         Instructions:
         1. Only include meaningful descriptions. All extraneous details, values like '|', and irrelevant logic should be omitted.
-        2. Ensure the descriptions focus on testing the business requirements as part of the software SDLC cycle. Descriptions should be actionable and meaningful. 
-           Make sure the test cases align closely with business rules and requirements with additional information with semantic meaning.
-        3. Need to have Test Case, Test Case Title, Description, Expected Outcome in the model response output
+        2. Ensure the descriptions focus on testing the {requirement_type} as part of the software SDLC cycle. Descriptions should be actionable and meaningful.
+        3. Test cases should closely align with both user and business requirements. They should explicitly test the functional and non-functional aspects of the system.
+        4. Test cases should consider **positive** and **negative scenarios** (e.g., valid and invalid inputs, edge cases, boundary conditions).
+        5. Include test cases for **error handling** and **exception scenarios**. For instance, how the system behaves when invalid data is entered or a network failure occurs.
+        6. Ensure that all **business rules** are tested, such as validation checks, price calculations, and regulatory compliance.
+        7. Ensure test cases are **reusable** and **scalable**: they should be written in a way that they can be applied across different modules or use cases.
+        8. Pay attention to performance-related scenarios like **load times**, **scalability**, and **system resource usage** when relevant.
+        9. Consider **security testing**: Test for vulnerabilities like **SQL injection**, **cross-site scripting (XSS)**, and **data leaks** when relevant.
+        10. Test for **usability**: Test how intuitive the system is for end-users, ensuring it is easy to navigate and interact with.
+        11. Ensure the test cases cover **user roles**: e.g., Admin, User, Guest. Test different permissions, visibility, and accessibility for each role.
+        12. Add **boundary tests** for fields such as email address length, password length, credit card number length, and other input data lengths.
+        13. Ensure that test cases are clear and precise, with all actions and expected results written in **user-friendly language**.
+        14. Pay attention to **multi-device and multi-browser compatibility** if the system is web or mobile-based.
+        15. Add **localization and internationalization** considerations when testing, such as different languages, currencies, or time zones.
+        16. Ensure that the **test steps** are detailed enough for testers to execute the case without ambiguity, and **expected outcomes** are clear and measurable.
+        17. Ensure that each test case includes a **Description** field with a clear, concise explanation of the test case's purpose.
+        18. The **Description** should describe the objective of the test case, the functionality being tested, and why it's important. 
+        19. Need to have Test Case ID, Test Case Title, Pre-Conditions,Test Steps, Description,Expected Outcome,Pass/Fail Criteria in the model response output
+
         
-        Business Requirements:
+        {requirement_type}:
         {requirements_text}
         
-        Now, based on the above business requirements, generate a set of detailed test cases, focusing on the business logic, conditions, and actions that should be tested.
+        Now, based on the above {requirement_type}, generate a set of detailed test cases, focusing on the business logic, conditions, and actions that should be tested.
         """
 
-        # Make the API call to generate test cases
+        # Make the API call to generate test cases using Google Gemini or other API.
         model = genai.GenerativeModel(model_name='gemini-1.5-flash-002')
-
         response = model.generate_content(prompt)
-        print(response.text)
+
         # Extract test case content from the LLM response
         try:
             test_case_text = response.text
-            # Log the raw extracted text for debugging
             logging.info(f"Extracted test case text: {test_case_text}")
         except KeyError as e:
             logging.error(f"Error extracting test case text: {e}")
             return json.dumps([])
 
-        # Check if the extracted text is non-empty
+        # If the response text is empty or not valid, return an empty list
         if not test_case_text.strip():
             logging.error("Generated test case content is empty.")
             return json.dumps([])
 
-        # Clean the response by removing '*' or '**' and making the list readable
+        # Clean the response to make the list of test cases readable
         import re
         cleaned_test_cases = [
-            re.sub(r"(Test\s*Case)\s*\d+", r"\1", line.strip())  # Removes number after 'Test Case' (keeps 'Test Case')
+            re.sub(r"(Test\s*Case)\s*\d+", r"\1", line.strip())  # Removes number after 'Test Case'
             .replace("'", '')  # Remove single quotes from the text
             .replace('*', '')  # Remove asterisks
             .replace('**', '')  # Remove double asterisks
             for line in test_case_text.strip().split('\n') if line.strip()
         ]
 
-
-        # Strip the quotes from the entire list
+        # Strip any extra quotes and spaces from the cleaned list
         cleaned_test_cases1 = [item.strip("'") for item in cleaned_test_cases]
 
-        print(cleaned_test_cases1)
-        import re
+        # Initialize the result list to store test cases
         result = []
         test_case = {}
 
+        inside_test_steps = False  # New flag to track when we're inside test steps
+
         for item in cleaned_test_cases1:
-            item=item.strip()
+            item = item.strip()
             if item.startswith('Test Case ID'):
-               test_case['Test Case ID'] = re.search(r':(.*)', item).group(1)
-               test_case_id = test_case["Test Case ID"]
+                test_case['Test Case ID'] = re.search(r':(.*)', item).group(1)
+                test_case_id = test_case["Test Case ID"]
+                inside_test_steps = False  # Reset flag for new test case
             elif item.startswith('Test Case Title'):
-               test_case['Test Case Title'] = re.search(r':(.*)', item).group(1)
-               test_case_title = test_case["Test Case Title"]
+                test_case['Test Case Title'] = re.search(r':(.*)', item).group(1)
+                test_case_title = test_case["Test Case Title"]
+            elif item.startswith('Pre-Conditions'):
+                test_case['Pre-Conditions'] = re.search(r':(.*)', item).group(1)
+                description = test_case['Pre-Conditions']
+            elif item.startswith('Test Steps'):
+                # Start collecting test steps
+                inside_test_steps = True
+                test_case['Test Steps'] = ""  # Initialize empty string for test steps
             elif item.startswith('Description'):
-               test_case['Description'] = re.search(r':(.*)', item).group(1) 
-               description = test_case['Description']
-            elif item.startswith('Expected Outcome'):   
-               test_case['Expected Outcome'] = re.search(r':(.*)', item).group(1) 
-               expected_outcome = test_case['Expected Outcome']
-               result.append(test_case.copy())
-               test_case = {}
-            elif item == 'Test Case':
-               continue 
+                test_case['Description'] = re.search(r':(.*)', item).group(1)
+                description = test_case['Description']
+            elif item.startswith('Expected Outcome'):
+                test_case['Expected Outcome'] = re.search(r':(.*)', item).group(1)
+                expected_outcome = test_case['Expected Outcome']
+                result.append(test_case.copy())  # Append the test case to result
+                test_case = {}  # Reset the dictionary for the next test case
+                inside_test_steps = False  # End test steps collection
+            elif inside_test_steps:  # If inside test steps, keep adding to 'Test Steps'
+                if test_case.get('Test Steps') is not None:
+                    test_case['Test Steps'] += "\n" + item
             else:
-               print(f"Skipping item: {item}") 
-        print(result)       
+                logging.info(f"Skipping item: {item}")
+
+        logging.info(f"Generated test cases: {result}")
         return json.dumps(result)
-                    
+
     except Exception as e:
         logging.error(f"Error generating test cases: {str(e)}")
-        # If something goes wrong, return a default message
         return json.dumps([{
             "test_case_id": "TC_001",
             "test_case_title": "Default Test Case",
             "description": f"An error occurred while generating test cases: {str(e)}",
-            "expected_output": "Pass"
+            "expected_output": "Test Case generation failure"
         }])
+
 
 
 def save_test_cases_as_html(test_cases_json):
@@ -197,13 +251,17 @@ def save_test_cases_as_html(test_cases_json):
         <body>
             <h1>Generated Test Cases</h1>
             <table>
-                <tr><th>Test Case ID</th><th>Test Case Title</th><th>Description</th><th>Expected Outcome</th></tr>
+                <tr><th>Test Case ID</th><th>Test Case Title</th><th>Pre-Conditions</th></th><th>Test Steps</th><th>Description</th><th>Expected Outcome</th></th><th>Pass/Fail Criteria</th></tr>
                 {% for test_case in test_cases %}
                     <tr>
                         <td>{{ test_case['Test Case ID']}}</td>
                         <td>{{ test_case['Test Case Title']}}</td>
+                 
+                        <td>{{ test_case['Pre-Conditions']}}</td>
+                        <td>{{ test_case['Test Steps']}}</td>
                         <td>{{ test_case['Description']}}</td>
                         <td>{{ test_case['Expected Outcome']}}</td>
+                        <td>{{ test_case['Pass/Fail Criteria']}}</td>
                     </tr>
                 {% endfor %}
             </table>
@@ -228,19 +286,14 @@ def save_test_cases_as_html(test_cases_json):
         return None
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-from flask import render_template, send_file, redirect, request
-
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'business_req_doc' not in request.files:
+    if 'business_req_doc' not in request.files or 'requirement_type' not in request.form:
         return redirect('/')
 
     file = request.files['business_req_doc']
+    requirement_type = request.form['requirement_type']  # Get the selected requirement type
+
     if file and allowed_file(file.filename):
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
@@ -256,8 +309,8 @@ def upload_file():
         if vectorstore is None:
             vectorstore = get_vectorstore(text_chunks)
 
-        # Generate test cases using the LLM
-        test_cases = generate_test_cases_with_llm(raw_text)
+        # Generate test cases using the LLM with the selected requirement type
+        test_cases = generate_test_cases_with_llm(raw_text, requirement_type)
 
         if not test_cases or test_cases == "[]":
             logging.error("No valid test cases generated.")
@@ -274,10 +327,17 @@ def upload_file():
         with open(html_file_path, 'r') as file:
             html_content = file.read()
 
+        # Set the header text based on the requirement type
+        page_header = f"Test Case for {requirement_type}"
+
         # Render HTML content in the panel and allow download
-        return render_template('index.html', html_content=html_content, html_file_path=html_file_path)
+        #return render_template('index.html', html_content=html_content, html_file_path=html_file_path, page_header=page_header)
+        return render_template('index.html', html_content=html_content, html_file_path=html_file_path, page_header=page_header, requirement_type=requirement_type)
+
 
     return redirect('/')
+
+
 
 
 from flask import send_file
@@ -317,6 +377,10 @@ def chat():
         session['chat_history'] = chat_history
 
     return render_template('chat.html', chat_history=chat_history)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 
 @app.route('/clear_chat_history', methods=['POST'])
